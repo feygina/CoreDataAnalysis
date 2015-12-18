@@ -1,0 +1,1147 @@
+---
+output:
+  pdf_document:
+    latex_engine: pdflatex
+    toc: yes
+    includes:
+      before_body: Title_page.tex
+---
+
+\newpage
+
+# **Problem 1. Explanation of the choice of the dataset** 
+
+    
+**Source:**  
+There are 881 players in our dataset. The dataset was taken from 
+[http://www.hse.ru/en/rlms/downloads](http://war-onice.com)
+
+
+**Relevance:**  
+In this project, we consider personal statistics of the National Hockey League players in previous season 2014-2015. In ice hockey, analytics is the analysis of the characteristics of hockey players and teams through the use of statistics and other tools to gain a greater understanding of the effects of their performance. There are several commonly used in ice hockey features in our dataset.
+
+
+**Description of features:**  
+1. Pos - is a position of a player (wing forward, central forward or defenseman). It is a categorical feature.
+2. Team - the player's team. It's just additional information. It won???t be used in our work.
+3. Gm - a number of games a player participated in season.
+4. Age - the player's age.
+5. Salary - the player's salary ($ a year)
+6. G - a number of goals a player scored in season.
+7. A - a number of player's assists in season.
+8. P - a number of player's points in season (goals + assists).
+9. G60 - goals scored per 60 minutes.
+10. A60 - assists recorded per 60 minutes.
+11. P60 - points recorded per 60 minutes.
+12. PenD - Penalty Differential (a differential between number of penalties drawn by the player and number of penalties taken by the player). It's clear that the more this feature the more valuable player is. If this feature is negative then the number of penalties taken by the player is more than the number of penalties drawn by the player. Such player harms to his team.
+13. CF% - Corsi for percentage of total. It's very important feature in hockey analytics.
+CF% = Corsi For / (Corsi For + Corsi Against), where Corsiis the sum of shots on goal, missed shots and blocked shots. "For" means made by player's team, "Against" means made by opponents. Most players have a Corsi For percentage (CF%) between 40 and 60. A player ranked above 55 is often considered "elite".
+14. PDO - is the sum of a team's shooting percentage and its save percentage (while player is on the ice). PDO is usually measured at even strength, and based on the theory that most teams will ultimately regress toward a sum of 100, is often viewed as a proxy for how lucky a team is. A player with a PDO over 102 is "probably not as good as they seem", while a player or team below 98 likely is better than they appear.
+15. PSh% - the player's personal shooting percentage for goal. In other words, the proportion of goals of all the shoots. It might show how accurate the player is.
+16. ZSO%Rel - Percentage of all on-ice non-Neutral Zone Faceoffs in the Offensive Zone minus the Percentage of all off-ice non-Neutral ZoneFaceoffs in the Deffensive Zone. A player who has a high zone start ratio will often have increased Corsi numbers due to starting in the offensive zone, while a player with a low zone start ratio will often have depressedCorsi numbers. Strategically, coaches may give their best offensive players more offensive zone starts to try
+and create extra scoring chances, while a team's best defensive players will typically have more defensive zone starts.
+17. TOI/Gm - Time on ice per game. 
+
+
+**Justification of choice:** 
+Examples of problems:
+- To show correlation between P60 and PDO;
+- To find out is the team is playing better with the player on the ice by using CF%;
+- To find out which of the features (or combination of the features) attempt to more specifically address individual performance.
+
+\newpage
+
+# **Problem 2.1**
+
+**All information in summary:**
+
+```{r}
+data = read.csv("data.csv", sep = ",")
+summary(data)
+colnames(data)
+```
+
+**As we know age is one of the most important factors in hockey, a lot of other characteristics depends on it. Also the hockey experts usually compare the average age of teams and then make some assumptions about how the teams play.**
+
+**Histogram of players Age:**
+
+```{r, echo=FALSE}
+hist(data$Age, 8)
+
+```
+
+**boxplot:**
+
+```{r}
+boxplot(data$Age, main = 'Boxplot of data$Age', horizontal = TRUE)
+
+```
+
+**mean:**
+
+```{r}
+mean(data$Age)
+```
+
+**median:**
+
+```{r}
+median(data$Age)
+```
+
+**mode:**
+
+```{r}
+findMode <- function(arg){
+data.t <- table(arg)
+return(sort(unique(arg))[which.max(data.t)])
+}
+findMode(data$Age)
+```
+
+**Hockey clubs select players since 18 years and track them throughout their careers. But if a player has not proved himself up to a certain age, then club parted with him. The mode is 23 years, it shows that basically in this age clubs give players a last chance to show themselves. Later on most of them goes to the lower league. Therefore, there is a so large number of 23-year-old players in the league.**
+**A median more than mode just because the maximum players' age is 42 years, and in addition to the 23-year-old players core of the team for the most part consits of the older players.**
+
+\newpage
+
+# **Problem 2.2**
+
+**statistical mean:**
+
+```{r}
+mean(data$Age)
+n <- nrow(data)
+m <- mean(data$Age)
+s <- sd(data$Age)
+conf.int <- c(m-1.965*s/sqrt(n), m+1.965*s/sqrt(n))
+print(conf.int)
+```
+
+**bootstrap:**
+
+```{r}
+nn <- nrow(data)
+means <- c()
+for(i in 1:5000)
+  {
+  means[i] <- mean(sample(data$Age, nn, replace = TRUE))
+  }
+```
+
+**new histogram:**
+
+```{r}
+hist(means)
+```
+
+**Because the histogram is similar to a normal distribution, we apply the technique of pivotal bootstrap.**
+
+```{r}
+n <- 5000
+m <- mean(means)
+s <- sd(means)
+pivotal.conf.int <- c(m-1.965*s/sqrt(n), m+1.965*s/sqrt(n))
+print(pivotal.conf.int)
+```
+
+**non-pivotal bootstrap:**
+
+```{r}
+sorted.means  <- sort(means)
+nonpivotal.conf.int <- c(sorted.means[0.025*5000], sorted.means[5000-0.025*5000])
+print(nonpivotal.conf.int)
+```
+
+**As the initial distribution is close to the normal the pivotal bootstrap let us get more narrow confidence interval than the statistical method. Non-pivoral bootstrap is not so precise (confidence interval is bigger in this case) as it makes no assupmtion about initial distribution.**
+
+\newpage
+
+# **Problem 2.3**
+
+**pivotal bootstrap for median:**
+
+```{r}
+medians <- c()
+for(i in 1:5000)
+  {
+  medians[i] <- median(sample(data$Age, nn, replace = TRUE))
+  }
+hist(medians)
+```
+
+**Because the histogram is not similar to a normal distribution, we can't apply the technique of pivotal bootstrap here.**
+
+**Non-pivotal bootstrap for median:**
+
+```{r}
+sorted.medians  <- sort(medians)
+nonpivotal.conf.int <- c(sorted.medians[0.025*5000], sorted.medians[5000-0.025*5000])
+print(nonpivotal.conf.int)
+```
+
+**pivotal bootstrap for mode:**
+
+```{r}
+modes <- c()
+for(i in 1:5000)
+  {
+  modes[i] <- findMode(sample(data$Age,nn, replace = TRUE))
+  }
+hist(modes)
+```
+
+**Because the histogram is not similar to a normal distribution, we can't apply the technique of pivotal bootstrap here.**
+
+**Non-pivotal bootstrap for mode:**
+
+```{r}
+sorted.modes  <- sort(modes)
+nonpivotal.conf.int <- c(sorted.modes[0.025*5000], sorted.modes[5000-0.025*5000])
+print(nonpivotal.conf.int)
+```
+
+**Conclusions: The histogram for the median does not have a polymodal distribution and hasn't heavy tails, so the bootstrap in this case can be applied. For mode-case it is not quite so, because in the histogram we can see heavy tail on the right, this greatly affects the confidence interval. We can use non-pivotal bootstrap here but you need to be careful.**
+
+\newpage
+
+# **Problem 2.4**
+
+**Devide players into two groups. Name players who has a salary higher than the median of all salaries in the league high-salary players, and who has a salary lower than the median - low-salary players. Consider their ages.**
+
+```{r}
+high.salary.players  <- data[data$Salary >= median(data$Salary),]
+low.salary.players  <- data[data$Salary < median(data$Salary),]
+print (mean(high.salary.players$Age))
+print (mean(low.salary.players$Age))
+```
+
+**bootstrape for high.salary.means:**
+
+```{r}
+high.salary.means <- c()
+for(i in 1:5000)
+  {
+  high.salary.means[i] <- mean(sample(high.salary.players$Age, nn, replace = TRUE))
+  }
+hist(high.salary.means)
+```
+
+**Because the histogram is similar to a normal distribution, we apply the technique of pivotal bootstrap.**
+
+```{r}
+n <- 5000
+m <- mean(high.salary.means)
+s <- sd(high.salary.means)
+pivotal.conf.int <- c(m-1.965*s/sqrt(n), m+1.965*s/sqrt(n))
+print(pivotal.conf.int)
+```
+
+**Non-pivotal bootstrap for high.salary.means:**
+
+```{r}
+sorted.high.salary.means  <- sort(high.salary.means)
+nonpivotal.conf.int <- c(sorted.high.salary.means[0.025*5000],
+                         sorted.high.salary.means[5000-0.025*5000])
+print(nonpivotal.conf.int)
+```
+
+**bootstrap for low.salary.means:**
+
+```{r}
+low.salary.means <- c()
+for(i in 1:5000)
+  {
+  low.salary.means[i] <- mean(sample(low.salary.players$Age, nn, replace = TRUE))
+  }
+hist(low.salary.means)
+```
+
+**Because the histogram is similar to a normal distribution, we apply the technique of pivotal bootstrap.**
+
+```{r}
+n <- 5000
+m <- mean(low.salary.means)
+s <- sd(low.salary.means)
+pivotal.conf.int <- c(m-1.965*s/sqrt(n), m+1.965*s/sqrt(n))
+print(pivotal.conf.int)
+```
+
+**Non-pivotal bootstrap for high.salary.means:**
+
+```{r}
+sorted.low.salary.means  <- sort(low.salary.means)
+nonpivotal.conf.int <- c(sorted.low.salary.means[0.025*5000],
+                         sorted.low.salary.means[5000-0.025*5000])
+print(nonpivotal.conf.int)
+```
+
+**Confidence intervals differs considerably. It is clear, that high-salary players are older than low-salary players on the average, because older players has more experience and, hense, are more valuable.**
+
+
+\newpage
+
+# **Problem 3.1**
+
+**I used plot(data) function to analyse which features to use. More "linear-like" scatterplot:**
+
+```{r}
+data = read.csv("data.csv", sep = ",")
+y <- data$P
+x <- data$A
+plot(x,y)
+```
+
+\newpage
+
+# **Problem 3.2**
+
+```{r}
+m <- lm(y ~ x)
+slope <- m$coefficients[2]
+intercept <- m$coefficients[1]
+```
+
+**Slope:**
+
+```{r}
+print(slope)
+```
+
+**The slope is about 1.51 means that the player, who makes one more assist, gets 1.51 points more on the average. From the one side it seems to be meaningless. It can be only explained by the fact that the players, who makes more assists, makes more goals also (as usual), hence gets more points.**
+
+**Intercept:**
+
+```{r}
+print(intercept)
+plot(x,y)
+abline(m)
+# calculate residuals and predicted values
+res <- signif(residuals(m), 5)
+pre <- predict(m) # plot distances between points and the regression line
+segments(x, y, x, pre, col="red")
+summary(m)
+```
+
+\newpage
+
+# **Problem 3.3**
+
+**Correlation:**
+
+```{r}
+cor(x,y)
+```
+
+**Determinacy coefficient:**
+
+```{r}
+cor(x,y)*cor(x,y)
+```
+
+**Determinacy coefficient signifies the rate of the explained deviation in relation to total data scatter.**
+**Higher Coefficient values suggest that the chosen model fits data quite well. It does not imply causality in general, however, just represents the relation between chosen features of the data.**
+
+\newpage
+
+# **Problem 3.4**
+
+**bootstrap:**
+
+```{r}
+n <- nrow(data)
+test_rows <- c()
+slopes <- c()
+intercepts <- c()
+cors <- c()
+for(i in 1:5000)
+  {
+  test_rows <- sample(n, n, replace = TRUE)
+  x <- c()
+  y <- c()
+  for(j in 1:n)
+  {
+    x[j] <- data$A[test_rows[j]]
+    y[j] <- data$P[test_rows[j]]
+  }
+  newdata <- data.frame(x, y)
+  m <- lm(y ~ x)
+  slopes[i] <- m$coefficients[2]
+  intercepts[i] <- m$coefficients[1]
+  cors[i] <- cor(x,y)
+}
+hist(slopes)
+hist(intercepts)
+hist(cors)
+```
+
+**Because the histogram is similar to a normal distribution, we can apply the technique of pivotal bootstrap.**
+
+**Slope:**
+
+```{r}
+n <- 5000
+m <- mean(slopes)
+s <- sd(slopes)
+pivotal.conf.int <- c(m-1.96*s/sqrt(n), m+1.96*s/sqrt(n))
+print(pivotal.conf.int)
+```
+
+**Intercept:**
+
+```{r}
+n <- 5000
+m <- mean(intercepts)
+s <- sd(intercepts)
+pivotal.conf.int <- c(m-1.96*s/sqrt(n), m+1.96*s/sqrt(n))
+print(pivotal.conf.int)
+```
+
+**Cor:**
+
+```{r}
+n <- 5000
+m <- mean(cors)
+s <- sd(cors)
+pivotal.conf.int <- c(m-1.96*s/sqrt(n), m+1.96*s/sqrt(n))
+print(pivotal.conf.int)
+```
+
+As we see, bootstrap confirms the results of the linear regression
+
+\newpage
+
+# **Problem 3.5**
+
+```{r}
+index <- which(data$P > 0)
+print(mean((abs((data$P[index] - slope*data$A[index] - intercept)/data$P[index]))*100))
+```
+
+**Although determinacy coefficient value is very high (about 92%), the average relative error is also high (about 29%). Linear regression minimizes the average squared difference. However, the average relative error can be made lower by using a nature inspired optimization approach.**
+
+\newpage
+
+# **Problem 3.6**
+
+```{r}
+data = read.csv("data.csv", sep = ",")
+yy <- data$P
+xx <- data$A
+```
+
+```{r, include= FALSE}
+library("GA")
+```
+
+**We used library("GA")**
+
+```{r, results="hide"}
+error_function <- function(x,y) (mean(abs((yy[index] - x*xx[index] - y)/yy[index])*100))
+GA <- ga(type = "real-valued",
+fitness = function(x) -error_function(x[1], x[2]),
+min = c(0, -10), max = c(5, 2), popSize = 50,
+maxiter = 1000)
+```
+
+##Results of genetic algorithm:
+
+```{r}
+summary(GA)
+plot(GA)
+y <- data$P
+x <- data$A
+plot(x,y)
+par(new = TRUE)
+curve(x*1.461158-0.4611531, col="red")
+```
+
+**Average relative error:**
+
+```{r}
+index <- which(data$P > 0)
+print(mean((abs((data$P[index] - 1.461059*data$A[index] +0.4610588)/data$P[index]))*100))
+```
+
+**Use of Nature-Inspired optimization algorithm allows us to receive better value of average relative error, which is expected, given that regression optimizes different measure of accuracy. The actual choice of optimization is dependent on accuracy metric viable for the model. In analyzing sport data the squared distance does not seem like a very accurate metric, so optimizing average relative square may be better**
+
+
+\newpage
+
+# **Problem 4.1**
+
+```{r, include= FALSE}
+data = read.csv("data.csv", sep = ",")
+```
+
+**Little reminder of used here features:**
+
+CF - Corsi for percentage of total. It's very important feature in hockey analytics.
+TOI.Gm - Time on ice per game.
+Salary - the player's salary ($ a year).
+
+```{r}
+#developing TOI.Gm feature(time on ice)
+breaks <- c(4,10,15,20,25,30)
+data$TOI.Gm_parts <- sapply(data$TOI.Gm, function(x) which.min(x > breaks))
+```
+
+```{r,include= FALSE}
+#rename for TOI.Gm:
+index <- which(data$TOI.Gm_parts == 2)
+data$TOI.Gm_parts[index] <- 'vsmall_time'
+index <- which(data$TOI.Gm_parts == 3)
+data$TOI.Gm_parts[index] <- 'small_time'
+index <- which(data$TOI.Gm_parts == 4)
+data$TOI.Gm_parts[index] <- 'med_time'
+index <- which(data$TOI.Gm_parts == 5)
+data$TOI.Gm_parts[index] <- 'large_time'
+index <- which(data$TOI.Gm_parts == 6)
+data$TOI.Gm_parts[index] <- 'huge_time'
+```
+
+```{r}
+#developing Salary feature 
+breaks <- c(0,1,3,5,14)
+data$Salary_parts <- sapply(data$Salary, function(x) which.min(x > breaks))
+```
+
+```{r,include= FALSE}
+#rename for Salary:
+index <- which(data$Salary_parts == 2)
+data$Salary_parts[index] <- 'vlow_salary'
+index <- which(data$Salary_parts == 3)
+data$Salary_parts[index] <- 'low_salary'
+index <- which(data$Salary_parts == 4)
+data$Salary_parts[index] <- 'med_salary'
+index <- which(data$Salary_parts == 5)
+data$Salary_parts[index] <- 'high_salary'
+```
+
+```{r}
+#developing CF feature 
+breaks <- c(20,40,50,60,73)
+data$CF_parts <- sapply(data$CF, function(x) which.min(x > breaks))
+```
+
+```{r,include= FALSE}
+#rename for CF:
+index <- which(data$CF_parts == 1)
+data$CF_parts[index] <- 'vsmall_corsi'
+index <- which(data$CF_parts == 2)
+data$CF_parts[index] <- 'small_corsi'
+index <- which(data$CF_parts == 3)
+data$CF_parts[index] <- 'med_corsi'
+index <- which(data$CF_parts == 4)
+data$CF_parts[index] <- 'high_corsi'
+index <- which(data$CF_parts == 5)
+data$CF_parts[index] <- 'huge_corsi'
+```
+
+\newpage
+
+# **Problem 4.2**
+
+```{r}
+#contingency table (conditional frequency table) for Salary and TOI.Gm
+cont1.table  <- table( data$Salary_parts, data$TOI.Gm_parts)
+norm.cont1.table  <-  100*cont1.table/nrow(data)
+```
+
+**Conditional frequency table for Salary and TOI.Gm:**
+
+```{r}
+print(norm.cont1.table)
+```
+
+```{r}
+#Quetelet coefficients table
+row1.sums  <- rowSums(cont1.table)
+col1.sums  <- colSums(cont1.table)
+norm.row1.sums  <- row1.sums/nrow(data)
+norm.col1.sums  <- col1.sums/nrow(data)
+q1.table <-  norm.cont1.table/(norm.row1.sums%*% t(norm.col1.sums)) - 1
+```
+
+**Quetelet coefficients table for Salary and TOI.Gm:**
+
+```{r}
+print(q1.table)
+```
+
+```{r}
+#contingency table (conditional frequency table) for Salary and CF
+cont2.table  <- table(data$Salary_parts, data$CF_parts)
+norm.cont2.table  <-  100*cont2.table/nrow(data)
+```
+
+**Conditional frequency table for Salary and CF:**
+
+```{r}
+print(norm.cont2.table)
+```
+
+```{r}
+#Quetelet coefficients table
+row2.sums  <- rowSums(cont2.table)
+col2.sums  <- colSums(cont2.table)
+norm.row2.sums  <- row2.sums/nrow(data)
+norm.col2.sums  <- col2.sums/nrow(data)
+q2.table <-  norm.cont2.table/(norm.row2.sums%*% t(norm.col2.sums)) - 1
+```
+
+**Quetelet coefficients table for Salary and CF:**
+
+```{r}
+print(q2.table)
+```
+
+**From the conditional frequency table for Salary and TOI/Gm we can conclude that the number of the lowest paid hockey players with small on-the-ice time prevails in the league. It makes sense. Also, from this table we see that there are no players with the lowest salary and huge on-the-ice time and there are no players with high salary and the lowest on-the-ice time. It is also clear. From the Quetelet coefficients table for Salary and TOI/Gm the main think that we can derive is that the presence of the highest salary increases the probability of the highest on-the-ice time by 625%. It is huge number. However, it is clear that the top-players get the most of the playing time. From the conditional frequency table for Salary and CF we can conclude that among the players with the lowest corsi number there are only the lowest paid players. Also, we have that among the highest paid hockey players there are no players with small and very small corsi number. Remember only one thing about corsi number: the more corsi number is the better player plays. In addition, from this table we see that the most players have medium corsi number. The main idea form the Quetelet coefficients table for Salary and CF: the fact that the hockey player has a high salary increases the corsi number by 308%.**
+
+\newpage
+
+# **Problem 4.3**
+
+**Summary Quetelet index is the inner product of two tables,that of co-occurrence and Quetelet:**
+
+```{r}
+norm.cont1.table  <-  cont1.table/nrow(data)
+norm.cont2.table  <-  cont2.table/nrow(data)
+Q1_table <- norm.cont1.table*q1.table
+```
+
+
+```{r}
+print(Q1_table)
+```
+
+**Pirson index for Salary and TOI/Gm table:**
+
+```{r}
+r.table1 <-  (-norm.row1.sums%*% t(norm.col1.sums)+ 
+                norm.cont1.table)/sqrt(norm.row1.sums%*% t(norm.col1.sums))
+print(r.table1)
+```
+
+**Pirson index for Salary and CF table:**
+
+```{r}
+r.table2 <-  (-norm.row2.sums%*% t(norm.col2.sums)+ 
+                norm.cont2.table )/sqrt(norm.row2.sums%*% t(norm.col2.sums))
+print(r.table2)
+```
+
+**Summary Quetelet index for Salary and TOI/Gm table:**
+
+```{r}
+Q1 <-  sum(norm.cont1.table^2/(norm.row1.sums%*%t(norm.col1.sums)))-1
+print(Q1)
+Q2 <-  sum(norm.cont2.table^2/(norm.row2.sums%*%t(norm.col2.sums)))-1
+```
+
+**Summary Quetelet index for Salary and CF table:**
+
+```{r}
+print(Q2)
+```
+
+**Q1 = 0.3141 means that if we know category one of the feature (TOI/Gm or Salary) the probability of another feature's category increases by 31.4% on the average. Similarly, Q2 = 0.0931 means that if we know category one of the feature (Corsi or Salary) the probability of another feature's category increases by 9.3% on the average. Also, in practice we can use Pearson???s chi-squared a measure of correlation. In other words, the average degree of correlation between categories of the Salary and categories of TOI/Gm is more than the average degree of correlation between categories of the Salary and categories of Corsi.**
+
+\newpage
+
+# **Problem 4.4**
+
+##Statistics style (check simple hypothesis)
+
+```{r}
+n <- nrow(data)
+#Every new iteration we randomly select sample with size = i:
+for (i in 10:n)
+{
+  test_rows <- c()
+  test_rows <- sample(n, i, replace = FALSE)
+  x <- y <- c()
+  for(j in 1:i)
+  {
+    x[j] <- data$Salary_parts[test_rows[j]]
+    y[j] <- data$TOI.Gm_parts[test_rows[j]]
+  }
+  newdata <- data.frame(x, y)
+	cont1.table  <- table(x, y)
+	nrow_table1 <- nrow(cont1.table)
+	ncol_table1 <- ncol(cont1.table)
+#Count Q for new sample:
+	norm.cont1.table <-  100*cont1.table/nrow(newdata)
+  row1.sums  <- rowSums(cont1.table)
+  col1.sums  <- colSums(cont1.table)
+  norm.row1.sums  <- row1.sums/nrow(newdata)
+  norm.col1.sums  <- col1.sums/nrow(newdata)
+  q1.table <-  norm.cont1.table/(norm.row1.sums%*% t(norm.col1.sums)) - 1
+  norm.cont1.table  <-  cont1.table/nrow(newdata)
+  Q11 <-  sum(norm.cont1.table^2/(norm.row1.sums%*%t(norm.col1.sums)))-1
+#Finding chi square values:
+  chi=qchisq(.95, df=(nrow_table1-1)*(ncol_table1-1))
+#Check hypothesis:
+  if(chi < Q11*nrow(newdata))
+  {
+    n_min <- i
+    break
+  }
+}
+```
+
+**Numbers of observations suffice to see the features as associated at 95% confidence level. First table**
+
+```{r}
+print(n_min)
+```
+
+```{r,include=FALSE}
+n <- nrow(data)
+for (i in 10:n)
+{
+  test_rows <- c()
+  test_rows <- sample(n, i, replace = FALSE)
+  x <- y <- c()
+  for(j in 1:i)
+  {
+    x[j] <- data$Salary_parts[test_rows[j]]
+    y[j] <- data$TOI.Gm_parts[test_rows[j]]
+  }
+  newdata <- data.frame(x, y)
+	cont1.table  <- table(x, y)
+	nrow_table1 <- nrow(cont1.table)
+	ncol_table1 <- ncol(cont1.table)
+	
+	norm.cont1.table <-  100*cont1.table/nrow(newdata)
+  row1.sums  <- rowSums(cont1.table)
+  col1.sums  <- colSums(cont1.table)
+  norm.row1.sums  <- row1.sums/nrow(newdata)
+  norm.col1.sums  <- col1.sums/nrow(newdata)
+  q1.table <-  norm.cont1.table/(norm.row1.sums%*%t(norm.col1.sums)) - 1
+  norm.cont1.table  <-  cont1.table/nrow(newdata)
+  Q11 <-  sum(norm.cont1.table^2/(norm.row1.sums%*%t(norm.col1.sums)))-1
+  chi=qchisq(.99, df=(nrow_table1-1)*(ncol_table1-1))
+
+  if(chi < Q11*nrow(newdata))
+  {
+    n_min <- i
+    break
+  }
+}
+```
+
+**Numbers of observations suffice to see the features as associated at 99% confidence level**
+
+```{r}
+print(n_min)
+```
+
+```{r, include=FALSE}
+n <- nrow(data)
+for (i in 10:n)
+{
+  test_rows <- c()
+  test_rows <- sample(n, i, replace = FALSE)
+  x <- y <- c()
+  for(j in 1:i)
+  {
+    x[j] <- data$Salary_parts[test_rows[j]]
+    y[j] <- data$CF_parts[test_rows[j]]
+  }
+  newdata <- data.frame(x, y)
+	cont2.table  <- table(x, y)
+	nrow_table2 <- nrow(cont2.table)
+	ncol_table2 <- ncol(cont2.table)
+	
+	norm.cont2.table <-  100*cont2.table/nrow(newdata)
+  row2.sums  <- rowSums(cont2.table)
+  col2.sums  <- colSums(cont2.table)
+  norm.row2.sums  <- row2.sums/nrow(newdata)
+  norm.col2.sums  <- col2.sums/nrow(newdata)
+  q2.table <-  norm.cont2.table/(norm.row2.sums%*%t(norm.col2.sums)) - 1
+  norm.cont2.table  <-  cont2.table/nrow(newdata)
+  Q22 <-  sum(norm.cont2.table^2/(norm.row2.sums%*%t(norm.col2.sums)))-1
+  chi=qchisq(.95, df=(nrow_table2-1)*(ncol_table2-1))
+
+  if(chi < Q22*nrow(newdata))
+  {
+    n_min <- i
+    break
+  }
+}
+```
+
+**Numbers of observations suffice to see the features as associated at 99% confidence level. Second table.**
+
+```{r}
+print(n_min)
+```
+
+```{r, include=FALSE}
+n <- nrow(data)
+for (i in 10:n)
+{
+  test_rows <- c()
+  test_rows <- sample(n, i, replace = FALSE)
+  x <- y <- c()
+  for(j in 1:i)
+  {
+    x[j] <- data$Salary_parts[test_rows[j]]
+    y[j] <- data$CF_parts[test_rows[j]]
+  }
+  newdata <- data.frame(x, y)
+	cont2.table  <- table(x, y)
+	nrow_table2 <- nrow(cont2.table)
+	ncol_table2 <- ncol(cont2.table)
+	
+	norm.cont2.table <-  100*cont2.table/nrow(newdata)
+  row2.sums  <- rowSums(cont2.table)
+  col2.sums  <- colSums(cont2.table)
+  norm.row2.sums  <- row2.sums/nrow(newdata)
+  norm.col2.sums  <- col2.sums/nrow(newdata)
+  q2.table <-  norm.cont2.table/(norm.row2.sums%*%t(norm.col2.sums)) - 1
+  norm.cont2.table  <-  cont2.table/nrow(newdata)
+  Q22 <-  sum(norm.cont2.table^2/(norm.row2.sums%*%t(norm.col2.sums)))-1
+  chi=qchisq(.99, df=(nrow_table2-1)*(ncol_table2-1))
+
+  if(chi < Q22*nrow(newdata))
+  {
+    n_min <- i
+    break
+  }
+}
+```
+
+**Numbers of observations suffice to see the features as associated at 95% confidence level. Second table.**
+
+```{r}
+print(n_min)
+```
+
+##Mirking style
+
+**Search of number of observations that suffices to see the features 'Salary' and 'TOI.Gm' as associated at 95% confidence level:**
+
+```{r}
+chi1 <- qchisq(.95, df=(nrow(norm.cont1.table)-1)*(ncol(norm.cont1.table)-1))
+new.n1 <- chi1 / Q1
+print(new.n1)
+```
+
+**Search of number of observations that suffices to see the features 'Salary' and 'TOI.Gm' as associated at 95% confidence level:**
+
+```{r}
+chi2 <- qchisq(.99, df=(nrow(norm.cont1.table)-1)*(ncol(norm.cont1.table)-1))
+new.n2 <- chi2 / Q1
+print(new.n2)
+```
+
+**Search of number of observations that suffices to see the features 'Salary' and 'CF' as associated at 95% confidence level:**
+
+```{r}
+chi3 <- qchisq(.95, df=(nrow(norm.cont1.table)-1)*(ncol(norm.cont1.table)-1))
+new.n3 <- chi3 / Q2
+print(new.n3)
+```
+
+**Search of number of observations that suffices to see the features 'Salary' and 'CF' as associated at 95% confidence level:**
+
+```{r}
+chi4 <- qchisq(.99, df=(nrow(norm.cont1.table)-1)*(ncol(norm.cont1.table)-1))
+new.n4 <- chi4 / Q2
+print(new.n4)
+```
+
+\newpage
+
+# **Problem 5.1**
+
+##Linear regression for normalized data:
+
+```{r, include= FALSE}
+data = read.csv("data.csv", sep = ",")
+```
+**Another important problem of multidimensional linear regression is a sign of diversity. If the scales measuring attributes significantly (by several orders of magnitude) are different, then there is DANGER that will take into account only the "large-scale" signs. To avoid this, do the standardization**
+
+```{r}
+standardize <- function(x) {
+    y <- (x - mean(x))/(sd(x))
+    y
+}
+```
+
+**Let's see if we have correlation between data that we want to use for linear regression:**
+
+```{r}
+some.data <- data[,4:7]
+cor(some.data)
+```
+
+**Results of modeling:**
+
+```{r}
+target  <- some.data$Salary
+some.data$Salary <- NULL
+raw.data <- some.data
+normal.data <- as.data.frame(lapply(some.data, standardize))
+norm.m  <-  lm(target ~., normal.data)
+#summary(norm.m)
+print(norm.m$coefficients)
+plot(norm.m)
+```
+
+**Linear regression for raw data:**
+
+```{r}
+raw.m  <-  lm(target ~., raw.data)
+print(raw.m$coefficients)
+```
+
+**We can conclude that the number of Goals has the most impact on the player's Salary. This means that the Salary would change more on the average if the number of Goals is increased, while the others features do not change, rather than if the other features are changed. Also, we see that the data standartization has led us to increased coefficients. It is so because the raw data values is bigger than the standardized data values.**
+
+\newpage
+
+# **Problem 5.2**
+
+##Determinacy coefficient
+
+```{r}
+print(summary(norm.m)$r.square)
+```
+
+**Let's count 95% confidence interval of determinacy coefficient using bootstrap**
+
+```{r}
+boot.data <-data[,4:7]
+rsq <- function(data, indices) {
+         d <- data[indices,]
+         target <- d$Salary
+         d$Salary <- NULL
+         fit <- lm(target~., data=d)
+         return(summary(fit)$r.square)
+}
+
+library(boot)
+set.seed(1234)
+results <- boot(data=boot.data, statistic=rsq,
+                R=1000)
+print(results)
+plot(results)
+```
+
+**We see that the Determinacy coefficient from the summary of the linear regression from the previous task and computed Determinacy coefficient are the same**
+
+##Confidence interval
+
+```{r}
+boot.ci(results, conf=0.95, type=c("bca"))
+```
+
+**It says us about that Gm, Age and G explain from 38% to 48% of the variance of the Salary with 95% probability**
+
+\newpage
+
+# **Problem 5.3**
+
+**Devide our dataset in two groups: forwards and defencemans. Take Salary	P60,	PenD,	CF%,	PDO,	PSh%,	ZSO%Rel,	TOI/Gm as input features. To find an appropriate Linear discriminant rule put 1 for all forwards and -1 for all defencemans and apply the least-squares criterion of linear regression. After additional rounding we get the following contingency table.**
+
+```{r}
+target <- c()
+index <- which(data$pos == "LD"|data$pos == "DR"|data$pos == "D"|data$pos == "RD")
+target[index] <- 2
+target[is.na(target)] <- 1
+
+library(MASS)
+std.data <- data[,12:18]
+hockey.lda <- lda(target ~ ., data=std.data)
+hockey.lda
+hockey.lda.values <- predict(hockey.lda)
+```
+
+**A nice way of displaying the results of a linear discriminant analysis (LDA) is to make a stacked histogram of the values of the discriminant function for the samples from different groups (different targets in our example).**
+
+```{r}
+summary(hockey.lda.values)
+ldahist(data = hockey.lda.values$x[,1], g=target)
+```
+
+**To cross-validate the accuracy of the Linear discriminant rule use the following code:**
+
+```{r}
+library("crossval")
+predfun.lda = function(train.x, train.y, test.x, test.y, negative)
+{
+  require("MASS")
+  lda.fit = lda(train.x, grouping=train.y)
+  ynew = predict(lda.fit, test.x)$class
+  out = confusionMatrix(test.y, ynew, negative=negative)
+  return( out )
+}
+```
+
+**2-fold validation scheme for the Linear discriminant rule gives us the following:**
+
+```{r}
+cv.out = crossval(predfun.lda, std.data, target, K=2, B=1, negative="1",verbose=FALSE)
+diagnosticErrors(cv.out$stat)
+```
+
+**10-fold validation scheme for the Linear discriminant rule gives us the following:**
+
+```{r}
+cv.out = crossval(predfun.lda, std.data, target, K=10, B=1, negative="1",verbose=FALSE)
+diagnosticErrors(cv.out$stat)
+```
+
+**Discriminant analysis by Fishers rule.**
+
+```{r}
+library(penalizedLDA)
+set.seed(1)
+n <- nrow(std.data)
+p <- ncol(std.data)
+x <- std.data
+y <- target
+out <- PenalizedLDA(x,y,lambda=.14,K=1)
+out$discrim
+pred.out <- predict(out,xte=std.data)
+table(pred.out$ypred,target)
+accuracy <- (table(pred.out$ypred,target)[1]
+             +table(pred.out$ypred,target)[4])/sum(table(pred.out$ypred,target))
+accuracy
+```
+
+**To cross-validate the accuracy of the Fisher discriminant rule use the following code:** 
+
+```{r} 
+library("crossval") 
+predfun.PenalizedLDA = function(train.x, train.y, test.x, test.y, negative)
+{ 
+require("MASS") 
+PenalizedLDA.fit = PenalizedLDA(train.x,train.y,lambda=.14, K=1) 
+ynew = predict(PenalizedLDA.fit, test.x)$ypred 
+out = confusionMatrix(test.y, ynew, negative=negative) 
+return( out ) 
+} 
+``` 
+
+**2-fold validation scheme for the Fisher discriminant rule gives us the following:** 
+
+```{r} 
+cv.out = crossval(predfun.PenalizedLDA, std.data, target, K=2, B=1, negative="1",verbose=FALSE) 
+diagnosticErrors(cv.out$stat)[1] 
+``` 
+
+**10-fold validation scheme for the Fisher discriminant rule gives us the following:**
+
+```{r} 
+cv.out = crossval(predfun.PenalizedLDA, std.data, target, K=10, B=1, negative="1",verbose=FALSE) 
+diagnosticErrors(cv.out$stat)[1] 
+```
+
+**The Linear discriminant rule and the Fisher discriminant rule use different numerical codes for "yes" and "no" classes. That's why they have slightly different accuracies. Accuracy of LDA is slightly better compared to FLDA. And there is much more advanced library for LDA.**
+
+\newpage
+
+# **Problem 6.1**
+
+**Consider such a factor as player's value.**
+**There is a huge number of different statistics in hockey. However, many ice hockey experts consider three most important features that characterize how useful (resp. how valuable) player is. These are P60, PenD and CF%. The first item shows how many points player get every game. The more P60 is, the more valuable player is. The second item is a differential between number of penalties drawn by the player and number of penalties taken by the player. The more PenD is, the more player's team has Powerplays, the more useful player is. The last one reflects the ration between shots made by player?s team and shots made by opponents while player is on the ice. It is clear that the more CF% value is, the more valuable player is.**
+
+```{r, include=TRUE}
+data = read.csv("data.csv", sep = ",")
+data <- data[order(data$ZSO,decreasing=FALSE),]
+data1 <- data[,12:14] #derive three features
+summary(data1)
+```
+
+\newpage
+
+# **Problem 6.2**
+
+**For this task we need to determine the different group of players. Consider ZSO feature. It is higher if a player starts his game change in the oponent's zone more often than in the home zone. P60, PenD, CF% are all related to the ZSO-value, because the more ZSO is the more chances a player has to get the points, gain the Powerplay and make his CF higher. So for this reason we have sorted our data by ZSO increase in the Task1 and we will take into account players with low/high ZSO-value when visualizing our data.**
+
+```{r, include=TRUE}
+#standardization with the normalization over deviations (Z-scoring)
+standardizeByDeviation <- function(x) {
+    y <- (x - mean(x))/(sd(x))
+    y
+}
+#standardization with the normalization over ranges
+standardizeByRange <- function(x) {
+    y <- (x - mean(x))/(max(x)-min(x))
+    y
+}
+data2 <- data1
+stdByDeviationData2 <- as.data.frame(lapply(data2, standardizeByDeviation))
+stdByRangeData2 <- as.data.frame(lapply(data2, standardizeByRange))
+#Compute two first singular triplets:
+resultOfSVD1 <- svd(stdByRangeData2, nu=2, nv=2, LINPACK = FALSE)
+Z1_1 <- resultOfSVD1$u[,1]*sqrt(resultOfSVD1$d[1])
+Z2_1 <- resultOfSVD1$u[,2]*sqrt(resultOfSVD1$d[2])
+#Determine the proportion of the variance taken into account:
+p1 <- (resultOfSVD1$d[1]^2+resultOfSVD1$d[2]^2)/sum(sum(stdByRangeData2*stdByRangeData2))
+plot(Z1_1[1:418],Z2_1[1:418],col="blue",pch=2,xlab=NA,ylab=NA,main="Standardization with 
+the normalization over ranges",sub="Blue - low-ZSO players
+Red - high-ZSO players") #plot low-ZSO
+points(Z1_1[419:836],Z2_1[419:836],col="red",pch=1) #plot high-ZSO
+resultOfSVD2 <- svd(stdByDeviationData2, nu=2, nv=2, LINPACK = FALSE)
+Z1_2 <- resultOfSVD2$u[,1]*sqrt(resultOfSVD2$d[1])
+Z2_2 <- resultOfSVD2$u[,2]*sqrt(resultOfSVD2$d[2])
+#Determine the proportion of the variance taken into account:
+p2 <- (resultOfSVD2$d[1]^2+resultOfSVD2$d[2]^2)/sum(sum(stdByDeviationData2*stdByDeviationData2))
+plot(Z1_2[1:418],Z2_2[1:418],col="blue",pch=2,xlab=NA,ylab=NA,main="Standardization with 
+the normalization over deviations",sub="Blue - low-ZSO players
+Red - high-ZSO players") #plot low-ZSO
+points(Z1_2[419:836],Z2_2[419:836],col="red",pch=1) #plot high-ZSO
+
+summary(stdByRangeData2) #display summary of stdByRangeData2
+
+p1 #display the proportion of the variance taken into account by stdByRangeData2
+
+summary(stdByDeviationData2) #display summary of stdByDeviationData2
+
+p2 #display the proportion of the variance taken into account by stdByDeviationData2
+```
+
+**Two plots are very similar, except only displaying ranges. We can see, maybe not quite clear, two groups of players with high/low ZSO-value. It is hard to say which normalization is better from the plots. However, normalization over deviations should make all features contribute similarly to the data scatter. This is confirmed by the fact that the computed proportion of the variance taken into account when normalizing over deviations (82%) is a little bit more than the computed proportion of the variance taken into account when normalizing over ranges (81%).**
+
+\newpage
+
+# **Problem 6.3**
+
+```{r, include=TRUE}
+library(base)
+#convert base features into the same scale, 0 to 100, to form matrix data1 for using in PCA
+data1[1] <- data1[1]*100/max(data1[1])
+data1[2] <- data1[2]-min(data1[2])
+data1[2] <- data1[2]*100/max(data1[2])
+data1[3] <- data1[3]-min(data1[3])
+data1[3] <- data1[3]*100/max(data1[3])
+summary(data1) #normalized features from 0 to 100
+resultOfSVD <- svd(data1, nu=1, nv=1, LINPACK = FALSE) #apply PCA to the data to find 
+#the First singular triplet
+z <- -resultOfSVD$u #first singular 836D scoring vector
+Mu <- resultOfSVD$d[1] #maximum singular value
+c <- -resultOfSVD$v #loadings
+#we need to rescale z to convert it to 0 ? 100 scale
+#we have equation for the hidden factor:
+#Z = (c[1]*P60+c[2]*PenD+c[3]*CF)*alpha
+#Find alpha that Z=100 at all features being 100
+alpha <- 100/(c[1]*100+c[2]*100+c[3]*100)
+#The FINAL equation is:
+Z <- c[1]*alpha*data1$P60+c[2]*alpha*data1$PenD+c[3]*alpha*data1$CF #Here Z reflects 
+#how valuable player is from 0 to 100
+ds <- sum(sum(data1*data1)) #data scatter
+contrib <- 100*(Mu^2)/ds #Contribution of thefirst component to the data scatter
+
+t(c) #display loadings
+
+contrib #display contribution
+
+cbind(data1, Z)[10:20,] #display 10 players summary table for clarity
+#with computed hidden factor (value of the player)
+```
+
+**From loadings' interpretation we can conclude that CF% plays more important role in player's utility estimation (by about 1.23 more than PenD, by about 2.39 more than P60). It may seem strange from the one hand. Usual people think that the number of points is the most significant value. However, our results confirm the fact that the coaching staff and scouts appreciate player's ability to gain the Powerplays for the team and defensive skills (CF% shows not only how many shots was made by player?s team, but also how few shots was made by opponents while player is on the ice).**
+**Also, we got a good contribution: 95.08%**
