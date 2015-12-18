@@ -1,0 +1,120 @@
+---
+title: "Untitled"
+output: pdf_document
+
+---
+
+# **Problem 7.1**
+
+```{r}
+data = read.csv("data.csv", sep = ",")
+summary(data)
+```
+
+**Function helping to make right chouse about number of K**
+
+```{r}
+wssplot <- function(data, nc=15, seed=1234){
+               wss <- (nrow(data)-1)*sum(apply(data,2,var))
+               for (i in 2:nc){
+                    set.seed(seed)
+                    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+                plot(1:nc, wss, type="b", xlab="Number of Clusters",
+                     ylab="Within groups sum of squares")}
+```
+
+**Data that we want to use for clusterization**
+
+```{r}
+kmeans.data <- data[4:18]
+head(kmeans.data)
+```
+
+**Scaling the data**
+
+```{r}
+kmeans.data.scaled <- scale(kmeans.data[-1])
+wssplot(kmeans.data.scaled)
+```
+
+**Let's do some clusterization**
+
+**3 clusters**
+
+```{r}
+# K-Means Cluster Analysis
+fit3 <- kmeans(kmeans.data, 3)
+# get cluster means 
+aggregate(kmeans.data,by=list(fit3$cluster),FUN=mean)
+# append cluster assignment
+kmeans.data <- data.frame(kmeans.data, fit3$cluster)
+```
+
+**Cluster Plot against 1st 2 principal components**
+
+```{r}
+# vary parameters for most readable graph
+library(cluster) 
+clusplot(kmeans.data, fit3$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+
+#Centroid Plot against 1st 2 discriminant functions
+
+#library(fpc)
+#plotcluster(kmeans.data, fit$cluster)
+```
+
+**4 clusters**
+
+```{r}
+# K-Means Cluster Analysis
+fit4 <- kmeans(kmeans.data, 4)
+# get cluster means 
+aggregate(kmeans.data,by=list(fit4$cluster),FUN=mean)
+# append cluster assignment
+kmeans.data <- data.frame(kmeans.data, fit4$cluster)
+```
+
+**Cluster Plot against 1st 2 principal components**
+
+```{r}
+# vary parameters for most readable graph
+clusplot(kmeans.data, fit4$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+```
+
+**7 clusters**
+
+```{r}
+# K-Means Cluster Analysis
+fit7 <- kmeans(kmeans.data, 7)
+# get cluster means 
+aggregate(kmeans.data,by=list(fit7$cluster),FUN=mean)
+# append cluster assignment
+kmeans.data <- data.frame(kmeans.data, fit7$cluster)
+```
+
+**Cluster Plot against 1st 2 principal components**
+
+```{r}
+# vary parameters for most readable graph
+clusplot(kmeans.data, fit7$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+```
+
+**comparing 2 cluster solutions 3-means and 4-means**
+
+```{r}
+library(fpc)
+d <- dist(kmeans.data)
+cluster.stats(d, fit3$cluster, fit4$cluster)
+```
+
+**comparing 2 cluster solutions 3-means and 7-means**
+
+```{r}
+#cluster.stats(d, fit3$cluster, fit7$cluster)
+```
+
+**comparing 2 cluster solutions 4-means and 7-means**
+
+```{r}
+#cluster.stats(d, fit4$cluster, fit7$cluster)
+```
