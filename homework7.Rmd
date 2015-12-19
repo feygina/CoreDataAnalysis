@@ -111,7 +111,7 @@ cluster.stats(d, fit3$cluster, fit4$cluster)
 
 **The correct choice of k is often ambiguous, with interpretations depending on the shape and scale of the distribution of points in a data set and the desired clustering resolution of the user. In addition, increasing k without penalty will always reduce the amount of error in the resulting clustering, to the extreme case of zero error if each data point is considered its own cluster (i.e., when k equals the number of data points, n). Intuitively then, the optimal choice of k will strike a balance between maximum compression of the data using a single cluster, and maximum accuracy by assigning each data point to its own cluster.**
 
-**So, in our case we see that the total within-cluster sum of squares is redusing as k is getting bigger (from 165 for k=3 to 125 for k=7).**
+**So, in our case we see that the total within-cluster sum of squares is redusing as k is getting bigger.**
 
 \newpage
 
@@ -143,3 +143,9 @@ memb <- cutree(hc, k = 7)
 clusplot(stdData, memb, color=TRUE, shade=TRUE)
 ```
 
+
+
+**Consider a set of 2D points presented. Those in problem 2 clustered by using the single link approach, whereas those in problem 1, by using the square error criterion of K-Means.**
+
+
+**Overall, this example demonstrates the major difference between conventional clustering and single link clustering: the latter finds elongated structures whereas the former cuts out convex parts. Sometimes, especially in the analysis of results of physical processes or experiments over real-world particles, the elongated structures do capture the essence of the data and are of great interest. In other cases, especially when entities/features have no intuitive geometric meaning ??? think of hockey players, for example, convex clusters make much more sense as groupings around their centroids.**
