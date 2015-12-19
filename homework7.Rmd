@@ -58,7 +58,7 @@ fit3$tot.withinss #total within-cluster sum of squares
 ```{r}
 # vary parameters for most readable graph
 library(cluster) 
-clusplot(kmeans.data.scaled, fit3$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+clusplot(kmeans.data.scaled, fit3$cluster, color=TRUE, shade=TRUE)
 ```
 
 **4 clusters**
@@ -77,7 +77,7 @@ fit4$tot.withinss #total within-cluster sum of squares
 
 ```{r}
 # vary parameters for most readable graph
-clusplot(kmeans.data.scaled, fit4$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+clusplot(kmeans.data.scaled, fit4$cluster, color=TRUE, shade=TRUE)
 ```
 
 **7 clusters**
@@ -96,7 +96,7 @@ fit7$tot.withinss #total within-cluster sum of squares
 
 ```{r}
 # vary parameters for most readable graph
-clusplot(kmeans.data.scaled, fit7$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
+clusplot(kmeans.data.scaled, fit7$cluster, color=TRUE, shade=TRUE)
 ```
 
 **comparing 2 cluster solutions 3-means and 4-means**
