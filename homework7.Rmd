@@ -35,7 +35,7 @@ head(kmeans.data)
 **Scaling the data**
 
 ```{r}
-kmeans.data.scaled <- scale(kmeans.data[-1])
+kmeans.data.scaled <- scale(kmeans.data)
 wssplot(kmeans.data.scaled)
 ```
 
@@ -50,6 +50,7 @@ fit3 <- kmeans(kmeans.data.scaled, 3)
 aggregate(kmeans.data.scaled,by=list(fit3$cluster),FUN=mean)
 # append cluster assignment
 kmeans.data.scaled <- data.frame(kmeans.data.scaled, fit3$cluster)
+fit3$tot.withinss #total within-cluster sum of squares
 ```
 
 **Cluster Plot against 1st 2 principal components**
@@ -58,11 +59,6 @@ kmeans.data.scaled <- data.frame(kmeans.data.scaled, fit3$cluster)
 # vary parameters for most readable graph
 library(cluster) 
 clusplot(kmeans.data.scaled, fit3$cluster, color=TRUE, shade=TRUE, labels=2, lines=0)
-
-#Centroid Plot against 1st 2 discriminant functions
-
-#library(fpc)
-#plotcluster(kmeans.data, fit$cluster)
 ```
 
 **4 clusters**
@@ -74,6 +70,7 @@ fit4 <- kmeans(kmeans.data.scaled, 4)
 aggregate(kmeans.data.scaled,by=list(fit4$cluster),FUN=mean)
 # append cluster assignment
 kmeans.data.scaled <- data.frame(kmeans.data.scaled, fit4$cluster)
+fit4$tot.withinss #total within-cluster sum of squares
 ```
 
 **Cluster Plot against 1st 2 principal components**
@@ -92,6 +89,7 @@ fit7 <- kmeans(kmeans.data.scaled, 7)
 aggregate(kmeans.data.scaled,by=list(fit7$cluster),FUN=mean)
 # append cluster assignment
 kmeans.data.scaled <- data.frame(kmeans.data.scaled, fit7$cluster)
+fit7$tot.withinss #total within-cluster sum of squares
 ```
 
 **Cluster Plot against 1st 2 principal components**
