@@ -13,7 +13,7 @@ library(stats)
 require(graphics)
 ```
 
-**Function helping to make right chouse about number of K**
+**Function helping to make right choice about number of K**
 
 ```{r}
 wssplot <- function(data, nc=15, seed=1234){
@@ -130,7 +130,7 @@ for(i in 1:6) #loop for finding 6 maximum edges in MST
 m <- which.max(tr$dist)
 tres <- tr$dist[m] + 0.00001 #set a treshold
 j <- distconnected(dis, toolong = tres) #find connected components in MST after deleting 6 edges
-clusplot(stdData, j, color=TRUE, shade=TRUE) #plot clusters
+clusplot(stdData, j, color=TRUE, shade=TRUE, labels=2, lines=0) #plot clusters
 ```
 
 
