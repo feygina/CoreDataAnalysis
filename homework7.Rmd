@@ -49,7 +49,6 @@ fit3 <- kmeans(kmeans.data.scaled, 3)
 # get cluster means 
 aggregate(kmeans.data.scaled,by=list(fit3$cluster),FUN=mean)
 # append cluster assignment
-kmeans.data.scaled <- data.frame(kmeans.data.scaled, fit3$cluster)
 fit3$tot.withinss #total within-cluster sum of squares
 ```
 
@@ -69,7 +68,6 @@ fit4 <- kmeans(kmeans.data.scaled, 4)
 # get cluster means 
 aggregate(kmeans.data.scaled,by=list(fit4$cluster),FUN=mean)
 # append cluster assignment
-kmeans.data.scaled <- data.frame(kmeans.data.scaled, fit4$cluster)
 fit4$tot.withinss #total within-cluster sum of squares
 ```
 
@@ -88,7 +86,6 @@ fit7 <- kmeans(kmeans.data.scaled, 7)
 # get cluster means 
 aggregate(kmeans.data.scaled,by=list(fit7$cluster),FUN=mean)
 # append cluster assignment
-kmeans.data.scaled <- data.frame(kmeans.data.scaled, fit7$cluster)
 fit7$tot.withinss #total within-cluster sum of squares
 ```
 
@@ -104,8 +101,17 @@ clusplot(kmeans.data.scaled, fit7$cluster, color=TRUE, shade=TRUE)
 ```{r}
 library(fpc)
 d <- dist(kmeans.data.scaled)
-cluster.stats(d, fit3$cluster, fit4$cluster)
+cluster.stats(d, fit3$cluster, fit4$cluster, compareonly = TRUE)
 ```
+
+**comparing 2 cluster solutions 4-means and 7-means**
+
+```{r}
+library(fpc)
+d <- dist(kmeans.data.scaled)
+cluster.stats(d, fit4$cluster, fit7$cluster, compareonly = TRUE)
+```
+
 
 **The correct choice of k is often ambiguous, with interpretations depending on the shape and scale of the distribution of points in a data set and the desired clustering resolution of the user. In addition, increasing k without penalty will always reduce the amount of error in the resulting clustering, to the extreme case of zero error if each data point is considered its own cluster (i.e., when k equals the number of data points, n). Intuitively then, the optimal choice of k will strike a balance between maximum compression of the data using a single cluster, and maximum accuracy by assigning each data point to its own cluster.**
 
@@ -130,7 +136,7 @@ for(i in 1:6) #loop for finding 6 maximum edges in MST
 m <- which.max(tr$dist)
 tres <- tr$dist[m] + 0.00001 #set a treshold
 j <- distconnected(dis, toolong = tres) #find connected components in MST after deleting 6 edges
-clusplot(stdData, j, color=TRUE, shade=TRUE, labels=2, lines=0) #plot clusters
+clusplot(stdData, j, color=TRUE, shade=TRUE) #plot clusters
 ```
 
 
@@ -142,11 +148,10 @@ clusplot(stdData, memb, color=TRUE, shade=TRUE)
 ```
 
 
-
 **Consider a set of 2D points presented. Those in problem 2 clustered by using the single link approach, whereas those in problem 1, by using the square error criterion of K-Means.**
 
 
 **Overall, this example demonstrates the major difference between conventional clustering and single link clustering: the latter finds elongated structures whereas the former cuts out convex parts. Sometimes, especially in the analysis of results of physical processes or experiments over real-world particles, the elongated structures do capture the essence of the data and are of great interest. In other cases, especially when entities/features have no intuitive geometric meaning - think of hockey players, for example, convex clusters make much more sense as groupings around their centroids.**
 
 
-**By using MST (with single linkage) we get 6 big clusters and 1 small cluster consisting of 1 player. This is probably can be one single player that differs very much from other players and doesn't get to any big cluster. However, K-means placed this player to some more general cluster, because in this case clusters are more convex. The shape of such clusters lets the objects (that are standing far away from others in terms of features' distances) to get into them.**
+**By using MST (with single linkage) we get 1 big clusters and 6 small cluster consisting of 1/3 player/s. This is probably can be players that differs very much from other players and doesn't get to any big cluster. However, K-means placed these player to some more general cluster, because in this case clusters are more convex. The shape of such clusters lets the objects (that are standing far away from others in terms of features' distances) to get into them.**
