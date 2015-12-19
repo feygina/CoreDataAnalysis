@@ -135,7 +135,6 @@ j <- distconnected(dis, toolong = tres) #find connected components in MST after 
 clusplot(stdData, j, color=TRUE, shade=TRUE) #plot clusters
 ```
 
-**As we see, MST doesn't work good for our data. It devides dataset in 1 big cluster and 6 small (1-3 players). Make sure that it is true by using the single linkage method (which is closely related to the minimal spanning tree).**
 
 ```{r, include=TRUE}
 hc <- hclust(dist(stdData), method = "single")
@@ -144,4 +143,3 @@ memb <- cutree(hc, k = 7)
 clusplot(stdData, memb, color=TRUE, shade=TRUE)
 ```
 
-**We get the same results (1 big cluster with 828 players, 1 cluster with 3 plauers and 5 clusters with 1 player). This may be partly because MST (with a single linkage) finds elongated structures in data. However, hockey features don't have any geometric meaning. So, in our case K-means works much better (although not perfect) which makes convex clusters of players by grouping them around some centroids.**
